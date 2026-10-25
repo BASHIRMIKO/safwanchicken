@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contact Safwan Chicken</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-page="contact">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand-box">
+          <div class="brand-mark">
+            <img alt="Safwan Chicken logo" src="logo.png" />
+          </div>
+          <div class="brand-copy">
+            <div class="brand-row">
+              <h1 class="brand-name">Safwan Chicken</h1>
+              <span class="material-symbols-outlined" style="font-size:16px; color:var(--primary);">restaurant</span>
+            </div>
+            <div class="brand-status">
+              <span class="indicator"></span>
+              <span>Open Now • 15-25 min</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="top-actions">
+          <a class="contact-pill" href="index.html">
+            <span class="material-symbols-outlined" style="font-size:18px; color:var(--primary);">home</span>
+            <span>Home</span>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <div class="page-shell">
+      <main>
+        <section class="section-panel">
+          <h3>Contact us</h3>
+          <div class="contact-layout">
+            <div class="contact-box">
+              <ul class="contact-list">
+                <li>
+                  <span class="material-symbols-outlined" style="color:var(--primary);">place</span>
+                  <div>
+                    <strong>Visit our branch</strong>
+                    <span>142 King Faisal St, Central Market, Food Street</span>
+                  </div>
+                </li>
+                <li>
+                  <span class="material-symbols-outlined" style="color:var(--primary);">call</span>
+                  <div>
+                    <strong>Phone</strong>
+                    <span>+966 55 123 4567</span>
+                  </div>
+                </li>
+                <li>
+                  <span class="material-symbols-outlined" style="color:var(--primary);">mail</span>
+                  <div>
+                    <strong>Email</strong>
+                    <span>hello@safwanchicken.com</span>
+                  </div>
+                </li>
+                <li>
+                  <span class="material-symbols-outlined" style="color:var(--primary);">schedule</span>
+                  <div>
+                    <strong>Opening hours</strong>
+                    <span>Mon-Sun • 10:00 AM - 11:30 PM</span>
+                  </div>
+                </li>
+              </ul>
+            </div>
+
+            <div class="contact-card">
+              <h3>Send a message</h3>
+              <form id="contactForm" class="form-grid">
+                <div class="field">
+                  <label for="name">Full name</label>
+                  <input id="name" name="name" type="text" placeholder="Your name" />
+                </div>
+
+                <div class="field">
+                  <label for="email">Email</label>
+                  <input id="email" name="email" type="email" placeholder="you@example.com" />
+                </div>
+
+                <div class="field">
+                  <label for="message">Message</label>
+                  <textarea id="message" name="message" placeholder="Tell us how we can help..."></textarea>
+                </div>
+
+                <button class="primary-btn" type="submit">Send message</button>
+              </form>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <nav class="bottom-nav" aria-label="Main navigation">
+      <div class="bottom-nav-inner">
+        <a class="nav-item" href="index.html">
+          <span class="material-symbols-outlined">home</span>
+          <span>Home</span>
+        </a>
+        <a class="nav-item" href="about.html">
+          <span class="material-symbols-outlined">info</span>
+          <span>About</span>
+        </a>
+        <a class="nav-item" href="products.html">
+          <span class="material-symbols-outlined">restaurant_menu</span>
+          <span>Menu</span>
+        </a>
+        <a class="nav-item active" href="contact.html">
+          <span class="material-symbols-outlined">call</span>
+          <span>Contact</span>
+        </a>
+      </div>
+    </nav>
+
+    <div class="toast" aria-live="polite">Message sent successfully!</div>
+    <script src="script.js"></script>
+  </body>
+</html>
