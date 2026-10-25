@@ -840,6 +840,232 @@ main {
   font-size: 16px;
 }
 
+.about-page {
+  padding: 16px;
+}
+
+.about-hero {
+  overflow: hidden;
+  border-radius: 24px;
+  background: var(--primary-ink);
+  color: #fff;
+  box-shadow: var(--shadow-strong);
+}
+
+.about-hero-copy {
+  padding: 24px 20px 20px;
+}
+
+.about-eyebrow,
+.about-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.about-eyebrow {
+  color: var(--gold-soft);
+}
+
+.about-eyebrow .material-symbols-outlined {
+  font-size: 17px;
+}
+
+.about-hero h2,
+.about-section-heading h2,
+.about-note h2 {
+  margin: 12px 0 10px;
+  font-family: "Epilogue", sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.045em;
+}
+
+.about-hero h2 {
+  max-width: 360px;
+  font-size: clamp(32px, 9vw, 43px);
+  line-height: 1.04;
+}
+
+.about-hero-copy > p {
+  max-width: 390px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.about-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 11px 15px;
+  border-radius: 999px;
+  background: var(--gold-soft);
+  color: var(--primary-ink);
+  font-size: 13px;
+  font-weight: 800;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.about-cta:hover {
+  transform: translateY(-2px);
+  background: #ffe8c5;
+}
+
+.about-cta .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.about-hero-image {
+  position: relative;
+  height: 210px;
+}
+
+.about-hero-image::after {
+  position: absolute;
+  inset: 35% 0 0;
+  background: linear-gradient(transparent, rgba(30, 10, 2, 0.55));
+  content: "";
+}
+
+.about-hero-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.about-image-label {
+  position: absolute;
+  z-index: 1;
+  right: 14px;
+  bottom: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.about-image-label .material-symbols-outlined {
+  font-size: 16px;
+}
+
+.about-section {
+  margin-top: 18px;
+  padding: 20px 16px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.about-section-heading h2,
+.about-note h2 {
+  font-size: 25px;
+  line-height: 1.12;
+}
+
+.about-section-heading > p,
+.about-note p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.about-values {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.about-value-card {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  column-gap: 12px;
+  align-items: start;
+  padding: 14px;
+  border-radius: 16px;
+  background: var(--bg-soft);
+}
+
+.about-value-card > .material-symbols-outlined {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 13px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 23px;
+}
+
+.about-value-card h3 {
+  margin: 1px 0 4px;
+  font-size: 14px;
+}
+
+.about-value-card p {
+  grid-column: 2;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.about-note {
+  display: grid;
+  grid-template-columns: 42px 1fr 36px;
+  gap: 12px;
+  align-items: center;
+  margin-top: 18px;
+  padding: 18px 16px;
+  border-radius: 20px;
+  background: var(--primary-soft);
+}
+
+.about-note-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(164, 55, 0, 0.12);
+  color: var(--primary);
+  font-size: 22px;
+}
+
+.about-note h2 {
+  margin-top: 6px;
+  margin-bottom: 6px;
+  font-size: 19px;
+}
+
+.about-note p {
+  font-size: 12px;
+}
+
+.about-note-link {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+}
+
+.about-note-link .material-symbols-outlined {
+  font-size: 19px;
+}
+
 .contact-layout {
   display: grid;
   grid-template-columns: 1fr;
@@ -930,6 +1156,34 @@ main {
 @media (max-width: 390px) {
   .brand-name {
     font-size: 16px;
+  }
+
+  .about-page {
+    padding: 12px;
+  }
+
+  .about-hero-copy {
+    padding: 21px 16px 18px;
+  }
+
+  .about-section {
+    padding: 18px 14px;
+  }
+
+  .about-note {
+    grid-template-columns: 36px 1fr 32px;
+    gap: 9px;
+    padding: 15px 12px;
+  }
+
+  .about-note-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .about-note-link {
+    width: 32px;
+    height: 32px;
   }
 
   .hero-title {
