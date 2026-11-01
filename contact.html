@@ -55,7 +55,7 @@
                   <span class="material-symbols-outlined" style="color:var(--primary);">call</span>
                   <div>
                     <strong>Phone</strong>
-                    <span><a href"tel:+2348141944405">+234 8141944405</a></span>
+                    <span><a href="tel:+2348141944405">+234 8141944405</a></span>
                   </div>
                 </li>
                 <li>
@@ -80,17 +80,17 @@
               <form id="contactForm" class="form-grid">
                 <div class="field">
                   <label for="name">Full name</label>
-                  <input id="name" name="name" type="text" placeholder="Your name" />
+                  <input id="name" name="name" type="text" placeholder="Your name" maxlength="120" autocomplete="name" required />
                 </div>
 
                 <div class="field">
                   <label for="email">Email</label>
-                  <input id="email" name="email" type="email" placeholder="you@example.com" />
+                  <input id="email" name="email" type="email" placeholder="you@example.com" maxlength="254" autocomplete="email" required />
                 </div>
 
                 <div class="field">
                   <label for="message">Message</label>
-                  <textarea id="message" name="message" placeholder="Tell us how we can help..."></textarea>
+                  <textarea id="message" name="message" placeholder="Tell us how we can help..." minlength="5" maxlength="5000" required></textarea>
                 </div>
 
                 <button class="primary-btn" type="submit">Send message</button>
@@ -123,6 +123,7 @@
     </nav>
 
     <div class="toast" aria-live="polite">Message sent successfully!</div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="script.js"></script>
   </body>
 </html>
