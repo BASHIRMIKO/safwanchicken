@@ -61,14 +61,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const accountButton = document.createElement('button');
     accountButton.className = 'backend-action account-trigger';
     accountButton.type = 'button';
-    accountButton.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">person</span><span class="account-label">Account</span>';
+    accountButton.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">person</span>';
     accountButton.setAttribute('aria-label', 'Open account');
     accountButton.addEventListener('click', () => openAccount());
 
     const cartButton = document.createElement('button');
     cartButton.className = 'backend-action cart-trigger';
     cartButton.type = 'button';
-    cartButton.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span><span>Cart</span><span class="cart-count" aria-live="polite">0</span>';
+    cartButton.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span><span class="cart-count" aria-live="polite">0</span>';
     cartButton.addEventListener('click', () => openCart());
     topActions.append(accountButton, cartButton);
   }
@@ -199,8 +199,10 @@ document.addEventListener('DOMContentLoaded', () => {
     accountModal.querySelector('.account-auth').hidden = signedIn;
     accountModal.querySelector('.account-profile').hidden = !signedIn;
     accountModal.querySelector('.account-email').textContent = state.user?.email || '';
-    const label = document.querySelector('.account-label');
-    if (label) label.textContent = signedIn ? 'My account' : 'Account';
+    document.querySelector('.account-trigger')?.setAttribute(
+      'aria-label',
+      signedIn ? 'Open my account' : 'Sign in to your account',
+    );
   };
 
   const loadProfileAndOrders = async () => {
@@ -372,11 +374,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!button) return;
     if (!state.user || !state.client) {
       button.textContent = '0';
+      button.closest('.cart-trigger')?.setAttribute('aria-label', 'Open cart, 0 items');
       return;
     }
     const items = await fetchCartItems();
     const count = items.reduce((total, item) => total + item.quantity, 0);
     button.textContent = String(count);
+    button.closest('.cart-trigger')?.setAttribute('aria-label', `Open cart, ${count} items`);
   };
 
   const addToCart = async (slug) => {
