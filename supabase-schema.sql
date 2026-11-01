@@ -64,6 +64,13 @@ create table if not exists public.orders (
   updated_at timestamptz not null default now()
 );
 
+alter table public.orders
+  add column if not exists payment_reference text;
+
+create unique index if not exists orders_payment_reference_idx
+  on public.orders (payment_reference)
+  where payment_reference is not null;
+
 create table if not exists public.order_items (
   id uuid primary key default gen_random_uuid(),
   order_id uuid not null references public.orders(id) on delete cascade,
@@ -182,6 +189,12 @@ on public.orders for select
 to authenticated
 using ((select auth.uid()) = user_id);
 
+drop policy if exists "Admins can view all orders" on public.orders;
+create policy "Admins can view all orders"
+on public.orders for select
+to authenticated
+using ((select auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
+
 drop policy if exists "Users can view items in their orders" on public.order_items;
 create policy "Users can view items in their orders"
 on public.order_items for select
@@ -194,6 +207,18 @@ using (
       and orders.user_id = (select auth.uid())
   )
 );
+
+drop policy if exists "Admins can view all order items" on public.order_items;
+create policy "Admins can view all order items"
+on public.order_items for select
+to authenticated
+using ((select auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
+
+drop policy if exists "Admins can view customer profiles" on public.profiles;
+create policy "Admins can view customer profiles"
+on public.profiles for select
+to authenticated
+using ((select auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
 
 drop policy if exists "Visitors can submit contact messages" on public.contact_messages;
 create policy "Visitors can submit contact messages"
@@ -318,6 +343,39 @@ $$;
 
 revoke all on function public.place_order(text, text, text) from public, anon, authenticated;
 grant execute on function public.place_order(text, text, text) to authenticated;
+
+create or replace function public.admin_update_order_status(
+  p_order_id uuid,
+  p_status text
+)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') <> 'admin' then
+    raise exception 'You are not authorized to manage orders.';
+  end if;
+
+  if p_status not in ('confirmed', 'cancelled') then
+    raise exception 'Invalid order action.';
+  end if;
+
+  update public.orders
+  set status = p_status, updated_at = now()
+  where id = p_order_id
+    and status = 'pending'
+    and payment_status = 'paid';
+
+  if not found then
+    raise exception 'This order is no longer awaiting a decision or its payment is not complete.';
+  end if;
+end;
+$$;
+
+revoke all on function public.admin_update_order_status(uuid, text) from public, anon, authenticated;
+grant execute on function public.admin_update_order_status(uuid, text) to authenticated;
 
 insert into public.menu_categories (name, slug, sort_order)
 values

@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     menu: [],
     menuReady: false,
     cartId: null,
+    adminFilter: 'all',
   };
 
   const page = document.body.dataset.page;
@@ -65,12 +66,15 @@ document.addEventListener('DOMContentLoaded', () => {
     accountButton.setAttribute('aria-label', 'Open account');
     accountButton.addEventListener('click', () => openAccount());
 
-    const cartButton = document.createElement('button');
-    cartButton.className = 'backend-action cart-trigger';
-    cartButton.type = 'button';
-    cartButton.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span><span class="cart-count" aria-live="polite">0</span>';
-    cartButton.addEventListener('click', () => openCart());
-    topActions.append(accountButton, cartButton);
+    topActions.append(accountButton);
+    if (page !== 'admin' && page !== 'payment') {
+      const cartButton = document.createElement('button');
+      cartButton.className = 'backend-action cart-trigger';
+      cartButton.type = 'button';
+      cartButton.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span><span class="cart-count" aria-live="polite">0</span>';
+      cartButton.addEventListener('click', () => openCart());
+      topActions.append(cartButton);
+    }
   }
 
   const accountModal = document.createElement('div');
@@ -152,8 +156,8 @@ document.addEventListener('DOMContentLoaded', () => {
           <label for="orderNotes">Order notes (optional)</label>
           <textarea id="orderNotes" name="notes" maxlength="500"></textarea>
         </div>
-        <p class="checkout-payment">Payment: cash on delivery</p>
-        <button class="primary-btn checkout-button" type="submit">Place order</button>
+        <p class="checkout-payment">Pay securely online by card, bank transfer, or USSD with Paystack.</p>
+        <button class="primary-btn checkout-button" type="submit">Pay online</button>
       </form>
     </section>`;
   document.body.append(cartModal);
@@ -203,6 +207,16 @@ document.addEventListener('DOMContentLoaded', () => {
       'aria-label',
       signedIn ? 'Open my account' : 'Sign in to your account',
     );
+    let adminLink = document.querySelector('.admin-dashboard-link');
+    if (isAdmin() && page !== 'admin' && topActions && !adminLink) {
+      adminLink = document.createElement('a');
+      adminLink.className = 'backend-action admin-dashboard-link';
+      adminLink.href = 'admin.html';
+      adminLink.textContent = 'Orders';
+      topActions.append(adminLink);
+    } else if (!isAdmin()) {
+      adminLink?.remove();
+    }
   };
 
   const loadProfileAndOrders = async () => {
@@ -218,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const { data: orders, error: ordersError } = await state.client
       .from('orders')
-      .select('id, status, total_ngn, created_at, order_items(item_name, quantity, line_total_ngn)')
+      .select('id, status, payment_status, total_ngn, created_at, order_items(item_name, quantity, line_total_ngn)')
       .eq('user_id', state.user.id)
       .order('created_at', { ascending: false })
       .limit(10);
@@ -244,9 +258,167 @@ document.addEventListener('DOMContentLoaded', () => {
       items.textContent = (order.order_items || [])
         .map((item) => `${item.quantity} × ${item.item_name}`)
         .join(', ');
-      article.append(heading, date, items);
+      const payment = document.createElement('span');
+      payment.textContent = `Payment: ${escapeText(order.payment_status || 'unpaid')}`;
+      article.append(heading, date, items, payment);
+      if (order.status === 'pending' && ['unpaid', 'failed'].includes(order.payment_status)) {
+        const retryPayment = document.createElement('button');
+        retryPayment.className = 'secondary-btn retry-payment-button';
+        retryPayment.type = 'button';
+        retryPayment.dataset.retryPayment = order.id;
+        retryPayment.textContent = 'Pay now';
+        article.append(retryPayment);
+      }
       orderList.append(article);
     });
+  };
+
+  const isAdmin = () => state.user?.app_metadata?.role === 'admin';
+
+  const renderAdminView = async () => {
+    const gate = document.querySelector('.admin-gate');
+    const dashboard = document.querySelector('.admin-dashboard');
+    if (!gate || !dashboard) return;
+    gate.hidden = isAdmin();
+    dashboard.hidden = !isAdmin();
+    if (!isAdmin()) return;
+
+    const list = dashboard.querySelector('.admin-order-list');
+    const message = dashboard.querySelector('.admin-orders-message');
+    message.textContent = 'Loading orders…';
+    const { data: orders, error } = await state.client
+      .from('orders')
+      .select('id, user_id, status, payment_status, subtotal_ngn, delivery_fee_ngn, total_ngn, delivery_address, phone, notes, created_at, order_items(item_name, quantity, line_total_ngn)')
+      .order('created_at', { ascending: false })
+      .limit(100);
+    if (error) throw error;
+
+    const customerIds = [...new Set((orders || []).map((order) => order.user_id))];
+    let profiles = [];
+    if (customerIds.length) {
+      const { data, error: profileError } = await state.client
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', customerIds);
+      if (profileError) throw profileError;
+      profiles = data || [];
+    }
+    const profileNames = new Map(profiles.map((profile) => [profile.id, profile.full_name]));
+    const allOrders = orders || [];
+    const paidOrders = allOrders.filter((order) => order.payment_status === 'paid');
+    dashboard.querySelector('[data-stat="new"]').textContent = String(
+      paidOrders.filter((order) => order.status === 'pending').length,
+    );
+    dashboard.querySelector('[data-stat="today"]').textContent = String(
+      paidOrders.filter((order) => new Date(order.created_at).toDateString() === new Date().toDateString()).length,
+    );
+    dashboard.querySelector('[data-stat="sales"]').textContent = formatPrice(
+      paidOrders.reduce((total, order) => total + order.total_ngn, 0),
+    );
+
+    const visibleOrders = allOrders.filter((order) => {
+      if (state.adminFilter === 'all') return true;
+      if (state.adminFilter === 'pending') return order.status === 'pending' && order.payment_status === 'paid';
+      if (state.adminFilter === 'accepted') return order.status === 'confirmed';
+      return order.status === 'cancelled';
+    });
+    list.replaceChildren();
+    message.textContent = visibleOrders.length ? '' : 'No orders in this view yet.';
+    visibleOrders.forEach((order) => {
+      const card = document.createElement('article');
+      card.className = 'admin-order-card';
+      const heading = document.createElement('div');
+      heading.className = 'admin-order-heading';
+      const title = document.createElement('div');
+      const name = document.createElement('h3');
+      name.textContent = profileNames.get(order.user_id) || 'Restaurant customer';
+      const reference = document.createElement('span');
+      reference.textContent = `Order ${order.id.slice(0, 8)} · ${new Date(order.created_at).toLocaleString()}`;
+      title.append(name, reference);
+      const badges = document.createElement('div');
+      badges.className = 'admin-order-badges';
+      const statusBadge = document.createElement('span');
+      statusBadge.className = `order-status status-${order.status}`;
+      statusBadge.textContent = order.status.replaceAll('_', ' ');
+      const paymentBadge = document.createElement('span');
+      paymentBadge.className = `payment-status payment-${order.payment_status}`;
+      paymentBadge.textContent = `Payment ${order.payment_status}`;
+      badges.append(statusBadge, paymentBadge);
+      heading.append(title, badges);
+
+      const details = document.createElement('div');
+      details.className = 'admin-order-details';
+      const items = document.createElement('p');
+      items.textContent = (order.order_items || [])
+        .map((item) => `${item.quantity} × ${item.item_name} (${formatPrice(item.line_total_ngn)})`)
+        .join(' · ');
+      const address = document.createElement('p');
+      address.textContent = `Deliver to: ${order.delivery_address}`;
+      const phone = document.createElement('p');
+      phone.textContent = `Phone: ${order.phone}`;
+      details.append(items, address, phone);
+      if (order.notes) {
+        const notes = document.createElement('p');
+        notes.textContent = `Note: ${order.notes}`;
+        details.append(notes);
+      }
+
+      const footer = document.createElement('div');
+      footer.className = 'admin-order-footer';
+      const total = document.createElement('strong');
+      total.textContent = formatPrice(order.total_ngn);
+      footer.append(total);
+      if (order.status === 'pending' && order.payment_status === 'paid') {
+        const actions = document.createElement('div');
+        actions.className = 'admin-order-actions';
+        ['confirmed', 'cancelled'].forEach((nextStatus) => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = nextStatus === 'confirmed' ? 'primary-btn' : 'secondary-btn';
+          button.dataset.adminAction = nextStatus;
+          button.dataset.orderId = order.id;
+          button.textContent = nextStatus === 'confirmed' ? 'Accept order' : 'Reject order';
+          actions.append(button);
+        });
+        footer.append(actions);
+      }
+      card.append(heading, details, footer);
+      list.append(card);
+    });
+  };
+
+  const verifyPaymentReturn = async () => {
+    const resultBox = document.querySelector('.payment-result');
+    if (!resultBox) return;
+    const message = resultBox.querySelector('[data-payment-message]');
+    const reference = new URLSearchParams(window.location.search).get('reference');
+    if (!reference) {
+      message.textContent = 'No payment reference was provided. You can check your recent orders in your account.';
+      return;
+    }
+    if (!state.user) {
+      message.textContent = 'Sign in to verify this payment and update your order.';
+      resultBox.querySelector('[data-open-account]').hidden = false;
+      return;
+    }
+    message.textContent = 'Verifying your payment securely…';
+    const { data: sessionData, error: sessionError } = await state.client.auth.getSession();
+    if (sessionError) throw sessionError;
+    const response = await fetch(`/api/payments/verify?reference=${encodeURIComponent(reference)}`, {
+      headers: { authorization: `Bearer ${sessionData.session.access_token}` },
+      cache: 'no-store',
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Could not verify this payment.');
+    if (result.paid) {
+      resultBox.querySelector('h2').textContent = 'Payment confirmed';
+      message.textContent = `Payment confirmed. Your order ${result.order_id.slice(0, 8)} has been sent to the restaurant.`;
+      resultBox.classList.add('payment-success');
+      await loadProfileAndOrders();
+      return;
+    }
+    resultBox.querySelector('h2').textContent = 'Payment not confirmed yet';
+    message.textContent = result.message || 'Payment is not confirmed yet. Refresh this page in a moment or check your account.';
   };
 
   const openAccount = async () => {
@@ -527,17 +699,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const submit = checkoutForm.querySelector('.checkout-button');
     submit.disabled = true;
     try {
-      const { data: orderId, error } = await state.client.rpc('place_order', {
-        p_delivery_address: String(form.get('delivery_address')).trim(),
-        p_phone: String(form.get('phone')).trim(),
-        p_notes: String(form.get('notes')).trim() || null,
+      const { data: sessionData, error: sessionError } = await state.client.auth.getSession();
+      if (sessionError) throw sessionError;
+      if (!sessionData.session) throw new Error('Your session has expired. Sign in and try again.');
+      const response = await fetch('/api/payments/initialize', {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${sessionData.session.access_token}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          delivery_address: String(form.get('delivery_address')).trim(),
+          phone: String(form.get('phone')).trim(),
+          notes: String(form.get('notes')).trim(),
+        }),
       });
-      if (error) throw error;
-      checkoutForm.reset();
-      await updateCartCount();
-      await renderCart();
-      showToast(`Order placed. Reference: ${String(orderId).slice(0, 8)}`);
-      cartModal.hidden = true;
+      const result = await response.json();
+      if (!response.ok) {
+        const retryHint = result.order_id
+          ? ' Your order is saved in recent orders; open your account to retry payment.'
+          : '';
+        throw new Error(`${result.error || 'Could not start online payment.'}${retryHint}`);
+      }
+      window.location.assign(result.authorization_url);
     } catch (error) {
       reportError(error);
     } finally {
@@ -551,6 +735,81 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
   setPurchaseButtonsEnabled(false);
+
+  accountModal.addEventListener('click', async (event) => {
+    const button = event.target.closest('[data-retry-payment]');
+    if (!button || !state.client || !state.user) return;
+    button.disabled = true;
+    try {
+      const { data: sessionData, error: sessionError } = await state.client.auth.getSession();
+      if (sessionError) throw sessionError;
+      if (!sessionData.session) throw new Error('Your session has expired. Sign in and try again.');
+      const response = await fetch('/api/payments/initialize', {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${sessionData.session.access_token}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ order_id: button.dataset.retryPayment }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Could not restart this payment.');
+      window.location.assign(result.authorization_url);
+    } catch (error) {
+      reportError(error);
+      button.disabled = false;
+    }
+  });
+
+  const adminPage = document.querySelector('.admin-dashboard');
+  if (adminPage) {
+    adminPage.addEventListener('click', async (event) => {
+      const filterButton = event.target.closest('[data-admin-filter]');
+      if (filterButton) {
+        state.adminFilter = filterButton.dataset.adminFilter;
+        adminPage.querySelectorAll('[data-admin-filter]').forEach((button) => {
+          button.classList.toggle('active', button === filterButton);
+        });
+        try {
+          await renderAdminView();
+        } catch (error) {
+          reportError(error);
+        }
+        return;
+      }
+
+      const actionButton = event.target.closest('[data-admin-action]');
+      if (actionButton && isAdmin()) {
+        const nextStatus = actionButton.dataset.adminAction;
+        if (nextStatus === 'cancelled' && !window.confirm('Reject this order?')) return;
+        actionButton.disabled = true;
+        try {
+          const { error } = await state.client.rpc('admin_update_order_status', {
+            p_order_id: actionButton.dataset.orderId,
+            p_status: nextStatus,
+          });
+          if (error) throw error;
+          showToast(nextStatus === 'confirmed' ? 'Order accepted.' : 'Order rejected.');
+          await renderAdminView();
+        } catch (error) {
+          reportError(error);
+        } finally {
+          actionButton.disabled = false;
+        }
+        return;
+      }
+
+      if (event.target.closest('.admin-refresh-button')) {
+        try {
+          await renderAdminView();
+        } catch (error) {
+          reportError(error);
+        }
+      }
+    });
+  }
+
+  document.querySelector('[data-open-account]')?.addEventListener('click', () => openAccount());
 
   document.addEventListener('click', async (event) => {
     const button = event.target.closest('.add-button, [data-add-slug]');
@@ -713,6 +972,10 @@ document.addEventListener('DOMContentLoaded', () => {
           state.cartId = null;
           updateAccountView();
           updateCartCount().catch(reportError);
+          renderAdminView().catch(reportError);
+          if (state.user && event === 'SIGNED_IN') {
+            verifyPaymentReturn().catch(reportError);
+          }
           if (state.user && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
             loadProfileAndOrders().catch(reportError);
           }
@@ -725,6 +988,8 @@ document.addEventListener('DOMContentLoaded', () => {
       updateAccountView();
       await loadMenu();
       await updateCartCount();
+      await renderAdminView();
+      await verifyPaymentReturn();
     } catch (error) {
       setPurchaseButtonsEnabled(false);
       reportError(error);

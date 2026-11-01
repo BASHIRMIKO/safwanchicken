@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Check your Safwan Chicken online payment." />
+    <title>Payment status | Safwan Chicken</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0,1,-50..200" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-page="payment">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand-box" href="index.html" aria-label="Safwan Chicken home">
+          <div class="brand-mark"><img alt="" src="images/logo.png" /></div>
+          <div class="brand-copy">
+            <div class="brand-row"><h1 class="brand-name">SAFWAN CHICKEN</h1></div>
+            <div class="brand-status"><span class="indicator"></span><span>Payment update</span></div>
+          </div>
+        </a>
+        <div class="top-actions"></div>
+      </div>
+    </header>
+
+    <div class="page-shell">
+      <main class="payment-page">
+        <section class="payment-result section-panel">
+          <span class="material-symbols-outlined payment-result-icon" aria-hidden="true">payments</span>
+          <span class="admin-eyebrow">SECURE CHECKOUT</span>
+          <h2>Checking your payment</h2>
+          <p data-payment-message role="status" aria-live="polite">Connecting to your order…</p>
+          <button class="primary-btn" type="button" data-open-account hidden>Sign in to verify</button>
+          <a class="secondary-btn" href="products.html">Back to the menu</a>
+        </section>
+      </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
